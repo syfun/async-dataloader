@@ -1,0 +1,5 @@
+uvicorn
+python-gql
+starlette-graphql
+databases
+sqlalchemy
