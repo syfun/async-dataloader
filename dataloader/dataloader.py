@@ -1,7 +1,7 @@
 import asyncio
 import dataclasses
 import inspect
-from typing import Any, Generic, TypeVar, Callable, Sequence, Awaitable, Optional, List, Union, Dict
+from typing import Any, Awaitable, Generic, TypeVar, Callable, Sequence, Optional, List, Union, Dict
 
 try:
     from typing import Protocol
@@ -10,11 +10,13 @@ except ImportError:
 
 __all__ = ['DataLoader']
 
-KT, VT, CT = TypeVar('KT'), TypeVar('VT'), TypeVar('CT')
+KT = TypeVar('KT')
+VT = TypeVar('VT')
+CT = TypeVar('CT')
 Number = Union[int, float]
 
 
-BatchLoadFn = Callable[[Sequence[KT]], Awaitable[Sequence[VT]]]
+BatchLoadFn = Callable[[List[KT]], Awaitable[List[VT]]]
 BatchScheduleFn = Callable[..., None]
 CacheKeyFn = Callable[[KT], CT]
 
