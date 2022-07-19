@@ -1,18 +1,29 @@
 import asyncio
 import dataclasses
 import inspect
-from typing import Any, Awaitable, Generic, TypeVar, Callable, Sequence, Optional, List, Union, Dict
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+)
+
+from typer import Option
 
 try:
     from typing import Protocol
 except ImportError:
     from typing_extensions import Protocol
 
-__all__ = ['DataLoader']
-
-KT = TypeVar('KT')
-VT = TypeVar('VT')
-CT = TypeVar('CT')
+KT = TypeVar("KT")
+VT = TypeVar("VT")
+CT = TypeVar("CT")
 Number = Union[int, float]
 
 
@@ -25,7 +36,7 @@ def is_number(n: Any) -> bool:
     return isinstance(n, (int, float))
 
 
-class CacheMap(Protocol[KT, VT]):
+class CacheMap(Protocol, Generic[KT, VT]):
     def get(self, key: KT) -> Optional[VT]:
         ...
 
@@ -92,13 +103,13 @@ class DataLoader(Generic[KT, VT, CT]):
     def __init__(
         self,
         batch_load_fn: BatchLoadFn,
-        options: Options[KT, VT, CT] = None,
-        loop: asyncio.AbstractEventLoop = None,
+        options: Optional[Options[KT, VT, CT]] = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
     ):
-        if not inspect.isfunction(batch_load_fn):
+        if not callable(batch_load_fn):
             raise TypeError(
-                f'DataLoader must be constructed with a function which accepts '
-                f'Sequence[key] and returns Awaitable[Sequence[value]], but got: {batch_load_fn}.'
+                f"DataLoader must be constructed with a function which accepts "
+                f"Sequence[key] and returns Awaitable[Sequence[value]], but got: {batch_load_fn}."
             )
         self._batch_load_fn = batch_load_fn
         self._max_batch_size = get_valid_max_batch_size(options)
@@ -120,7 +131,8 @@ class DataLoader(Generic[KT, VT, CT]):
         """
         if key is None:
             raise TypeError(
-                f'The loader.load() function must be called with a value, ' f'but got: {key}.'
+                f"The loader.load() function must be called with a value, "
+                f"but got: {key}."
             )
         batch = get_current_batch(self)
         cache_map = self._cache_map
@@ -149,7 +161,7 @@ class DataLoader(Generic[KT, VT, CT]):
         """
         return asyncio.gather(*[self.load(key) for key in keys])
 
-    def clear(self, key: KT) -> 'DataLoader':
+    def clear(self, key: KT) -> "DataLoader":
         """
         Clears the future at key from the cache, if it exists. Returns itself for
         method chaining.
@@ -158,7 +170,7 @@ class DataLoader(Generic[KT, VT, CT]):
             self._cache_map.delete(self._cache_key_fn(key))
         return self
 
-    def clear_all(self) -> 'DataLoader':
+    def clear_all(self) -> "DataLoader":
         """
         Clears the entire cache. To be used when some event results in unknown
         invalidations across this particular Dataloader. Returns itself for
@@ -169,11 +181,10 @@ class DataLoader(Generic[KT, VT, CT]):
 
         return self
 
-    def prime(self, key: KT, value: Union[VT, Exception]) -> 'DataLoader':
+    def prime(self, key: KT, value: Union[VT, Exception]) -> "DataLoader":
         """
         Adds the provided key and value to the cache. If the key already exists,
         no change is made. Returns itself for method chaining.
-
         To prime the cache with an exception at a key, provide an Exception instance.
         """
         if self._cache_map:
@@ -207,7 +218,9 @@ def get_current_batch(loader: DataLoader[KT, VT, Any]) -> Batch[KT, VT]:
 
     new_batch = Batch(has_dispatched=False, keys=[], futures=[])
     loader._batch = new_batch
-    loader._batch_schedule_fn(loader, asyncio.create_task, dispatch_batch(loader, new_batch))
+    loader._batch_schedule_fn(
+        loader, asyncio.create_task, dispatch_batch(loader, new_batch)
+    )
     return new_batch
 
 
@@ -223,26 +236,26 @@ async def dispatch_batch(loader: DataLoader[KT, VT, Any], batch: Batch[KT, VT]) 
     batch_coroutine = loader._batch_load_fn(batch.keys)
     if not batch_coroutine or not inspect.isawaitable(batch_coroutine):
         error = TypeError(
-            f'DataLoader must be constructed with a function which accepts '
-            f'Sequence[key] and returns Awaitable[Sequence[value]], but the function did '
-            f'not return a Aawaitable object: {batch_coroutine}.'
+            f"DataLoader must be constructed with a function which accepts "
+            f"Sequence[key] and returns Awaitable[Sequence[value]], but the function did "
+            f"not return a Aawaitable object: {batch_coroutine}."
         )
         return failed_dispatch(loader, batch, error)
 
     values = await batch_coroutine
     if not isinstance(values, Sequence):
         raise TypeError(
-            f'DataLoader must be constructed with a function which accepts '
-            f'Sequence[key] and returns Awaitable[Sequence[value]], but the function did '
-            f'not return a Awaitable object of Sequence[value]: {values}.'
+            f"DataLoader must be constructed with a function which accepts "
+            f"Sequence[key] and returns Awaitable[Sequence[value]], but the function did "
+            f"not return a Awaitable object of Sequence[value]: {values}."
         )
 
     if len(values) != len(batch.keys):
         raise TypeError(
-            'DataLoader must be constructed with a function which accepts '
-            'Sequence[key] and returns Awaitable[Sequence[value]], but the function did '
-            'not return a Awaitable object of Sequence[value] of the same length as '
-            'the Sequence of keys.' + f'\n\nKeys: \n {batch.keys}\n\nValues: {values}'
+            "DataLoader must be constructed with a function which accepts "
+            "Sequence[key] and returns Awaitable[Sequence[value]], but the function did "
+            "not return a Awaitable object of Sequence[value] of the same length as "
+            "the Sequence of keys." + f"\n\nKeys: \n {batch.keys}\n\nValues: {values}"
         )
 
     for future, value in zip(batch.futures, values):
@@ -264,32 +277,38 @@ def failed_dispatch(
         future.set_exception(error)
 
 
-def get_valid_max_batch_size(options: Options[Any, Any, Any] = None) -> Number:
+def get_valid_max_batch_size(
+    options: Optional[Options[Any, Any, Any]] = None
+) -> Number:
     should_batch = not options or options.batch
     if not should_batch:
         return 1
 
     max_batch_size = options and options.max_batch_size
     if max_batch_size is None:
-        return float('inf')
+        return float("inf")
 
     if not is_number(max_batch_size) or max_batch_size < 1:
-        raise TypeError(f'max_batch_size must be a positive number: {max_batch_size}')
+        raise TypeError(f"max_batch_size must be a positive number: {max_batch_size}")
 
     return max_batch_size
 
 
-def default_batch_schedule_fn(loader: DataLoader, callback: Callable, *args: Any) -> None:
+def default_batch_schedule_fn(
+    loader: DataLoader, callback: Callable, *args: Any
+) -> None:
     loader.loop.call_soon(callback, *args)
 
 
-def get_valid_batch_schedule_fn(options: Options[Any, Any, Any] = None) -> BatchScheduleFn:
+def get_valid_batch_schedule_fn(
+    options: Optional[Options[Any, Any, Any]] = None
+) -> BatchScheduleFn:
     batch_schedule_fn = options and options.batch_schedule_fn
     if batch_schedule_fn is None:
         return default_batch_schedule_fn
 
     if not inspect.isfunction(batch_schedule_fn):
-        raise TypeError(f'batch_schedule_fn must be a function: {batch_schedule_fn}')
+        raise TypeError(f"batch_schedule_fn must be a function: {batch_schedule_fn}")
 
     return batch_schedule_fn
 
@@ -298,13 +317,15 @@ def default_cache_key_fn(key: Any) -> Any:
     return key
 
 
-def get_valid_cache_key_fn(options: Options[KT, Any, CT] = None) -> CacheKeyFn:
+def get_valid_cache_key_fn(
+    options: Optional[Options[Any, Any, Any]] = None
+) -> CacheKeyFn:
     cache_key_fn = options and options.cache_key_fn
     if cache_key_fn is None:
         return default_cache_key_fn
 
     if not inspect.isfunction(cache_key_fn):
-        raise TypeError(f'cache_key_fn must be a function: {cache_key_fn}')
+        raise TypeError(f"cache_key_fn must be a function: {cache_key_fn}")
 
     return cache_key_fn
 
@@ -315,7 +336,7 @@ def has_function(value: Any, fn_name: str) -> bool:
 
 
 def get_valid_cache_map(
-    options: Options[KT, VT, CT] = None
+    options: Optional[Options[Any, VT, CT]] = None
 ) -> Optional[CacheMap[CT, Awaitable[VT]]]:
     should_cache = not options or options.cache
     if not should_cache:
@@ -331,9 +352,11 @@ def get_valid_cache_map(
             fn = getattr(cache_map, fn_name, None)
             return not fn or inspect.isfunction(fn)
 
-        cache_functions = ['get', 'set', 'delete', 'clear']
+        cache_functions = ["get", "set", "delete", "clear"]
         missing_functions = list(filter(has_no_function, cache_functions))
         if len(missing_functions):
-            raise TypeError('Custom cache_map missing methods: ' + ', '.join(missing_functions))
+            raise TypeError(
+                "Custom cache_map missing methods: " + ", ".join(missing_functions)
+            )
 
     return cache_map
