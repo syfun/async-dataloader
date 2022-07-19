@@ -14,8 +14,6 @@ from typing import (
     Union,
 )
 
-from typer import Option
-
 try:
     from typing import Protocol
 except ImportError:
