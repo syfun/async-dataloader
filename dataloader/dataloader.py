@@ -239,8 +239,11 @@ async def dispatch_batch(loader: DataLoader[KT, VT, Any], batch: Batch[KT, VT]) 
             f"not return a Aawaitable object: {batch_coroutine}."
         )
         return failed_dispatch(loader, batch, error)
+    try:
+        values = await batch_coroutine
+    except BaseException as e:
+        return failed_dispatch(loader, batch, e)
 
-    values = await batch_coroutine
     if not isinstance(values, Sequence):
         raise TypeError(
             f"DataLoader must be constructed with a function which accepts "
