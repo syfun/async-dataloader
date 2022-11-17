@@ -128,10 +128,7 @@ class DataLoader(Generic[KT, VT, CT]):
         Loads a key, returning a future for the value represented by that key.
         """
         if key is None:
-            raise TypeError(
-                f"The loader.load() function must be called with a value, "
-                f"but got: {key}."
-            )
+            raise TypeError(f"The loader.load() function must be called with a value, " f"but got: {key}.")
         batch = get_current_batch(self)
         cache_map = self._cache_map
         cache_key = self._cache_key_fn(key)
@@ -207,18 +204,12 @@ def get_current_batch(loader: DataLoader[KT, VT, Any]) -> Batch[KT, VT]:
     # If there is an existing batch which has not yet dispatched and is within
     # the limit of the batch size, then return it.
     exiting_batch = loader._batch
-    if (
-        exiting_batch
-        and not exiting_batch.has_dispatched
-        and len(exiting_batch.keys) < loader._max_batch_size
-    ):
+    if exiting_batch and not exiting_batch.has_dispatched and len(exiting_batch.keys) < loader._max_batch_size:
         return exiting_batch
 
     new_batch = Batch(has_dispatched=False, keys=[], futures=[])
     loader._batch = new_batch
-    loader._batch_schedule_fn(
-        loader, asyncio.create_task, dispatch_batch(loader, new_batch)
-    )
+    loader._batch_schedule_fn(loader, asyncio.create_task, dispatch_batch(loader, new_batch))
     return new_batch
 
 
@@ -266,9 +257,7 @@ async def dispatch_batch(loader: DataLoader[KT, VT, Any], batch: Batch[KT, VT]) 
             future.set_result(value)
 
 
-def failed_dispatch(
-    loader: DataLoader[KT, VT, Any], batch: Batch[KT, VT], error: Exception
-) -> None:
+def failed_dispatch(loader: DataLoader[KT, VT, Any], batch: Batch[KT, VT], error: Exception) -> None:
     """
     do not cache individual loads if the entire batch dispatch fails,
     but still set_exception to each future so they do not hang.
@@ -278,9 +267,7 @@ def failed_dispatch(
         future.set_exception(error)
 
 
-def get_valid_max_batch_size(
-    options: Optional[Options[Any, Any, Any]] = None
-) -> Number:
+def get_valid_max_batch_size(options: Optional[Options[Any, Any, Any]] = None) -> Number:
     should_batch = not options or options.batch
     if not should_batch:
         return 1
@@ -295,15 +282,11 @@ def get_valid_max_batch_size(
     return max_batch_size
 
 
-def default_batch_schedule_fn(
-    loader: DataLoader, callback: Callable, *args: Any
-) -> None:
+def default_batch_schedule_fn(loader: DataLoader, callback: Callable, *args: Any) -> None:
     loader.loop.call_soon(callback, *args)
 
 
-def get_valid_batch_schedule_fn(
-    options: Optional[Options[Any, Any, Any]] = None
-) -> BatchScheduleFn:
+def get_valid_batch_schedule_fn(options: Optional[Options[Any, Any, Any]] = None) -> BatchScheduleFn:
     batch_schedule_fn = options and options.batch_schedule_fn
     if batch_schedule_fn is None:
         return default_batch_schedule_fn
@@ -318,9 +301,7 @@ def default_cache_key_fn(key: Any) -> Any:
     return key
 
 
-def get_valid_cache_key_fn(
-    options: Optional[Options[Any, Any, Any]] = None
-) -> CacheKeyFn:
+def get_valid_cache_key_fn(options: Optional[Options[Any, Any, Any]] = None) -> CacheKeyFn:
     cache_key_fn = options and options.cache_key_fn
     if cache_key_fn is None:
         return default_cache_key_fn
@@ -336,9 +317,7 @@ def has_function(value: Any, fn_name: str) -> bool:
     return not fn or inspect.isfunction(fn)
 
 
-def get_valid_cache_map(
-    options: Optional[Options[Any, VT, CT]] = None
-) -> Optional[CacheMap[CT, Awaitable[VT]]]:
+def get_valid_cache_map(options: Optional[Options[Any, VT, CT]] = None) -> Optional[CacheMap[CT, Awaitable[VT]]]:
     should_cache = not options or options.cache
     if not should_cache:
         return None
@@ -356,8 +335,6 @@ def get_valid_cache_map(
         cache_functions = ["get", "set", "delete", "clear"]
         missing_functions = list(filter(has_no_function, cache_functions))
         if len(missing_functions):
-            raise TypeError(
-                "Custom cache_map missing methods: " + ", ".join(missing_functions)
-            )
+            raise TypeError("Custom cache_map missing methods: " + ", ".join(missing_functions))
 
     return cache_map

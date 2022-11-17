@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "async-dataloader"
-version = "0.2.2"
+version = "0.2.3"
 description = "Asyncio Dataloader for GraphQL."
 authors = ["syfun <sunyu418@gmail.com>"]
 license = "MIT"
@@ -22,3 +22,22 @@ pytest-asyncio = "^0.12.0"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[tool.black]
+line-length = 120
+skip-string-normalization = false
+exclude = '''
+(
+  /(
+      \.git
+    | \.venv
+    | \.mypy_cache
+    | __pycache__
+  )
+)
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+multi_line_output = 3
