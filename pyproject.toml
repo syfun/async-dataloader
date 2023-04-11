@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "async-dataloader"
-version = "0.2.3"
+version = "0.2.4"
 description = "Asyncio Dataloader for GraphQL."
 authors = ["syfun <sunyu418@gmail.com>"]
 license = "MIT"
