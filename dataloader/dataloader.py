@@ -100,7 +100,7 @@ class DataLoader(Generic[KT, VT, CT]):
 
     def __init__(
         self,
-        batch_load_fn: BatchLoadFn,
+        batch_load_fn: BatchLoadFn[KT, VT],
         options: Optional[Options[KT, VT, CT]] = None,
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ):
@@ -156,7 +156,7 @@ class DataLoader(Generic[KT, VT, CT]):
         """
         return asyncio.gather(*[self.load(key) for key in keys])
 
-    def clear(self, key: KT) -> "DataLoader":
+    def clear(self, key: KT) -> "DataLoader[KT, VT, CT]":
         """
         Clears the future at key from the cache, if it exists. Returns itself for
         method chaining.
@@ -165,7 +165,7 @@ class DataLoader(Generic[KT, VT, CT]):
             self._cache_map.delete(self._cache_key_fn(key))
         return self
 
-    def clear_all(self) -> "DataLoader":
+    def clear_all(self) -> "DataLoader[KT, VT, CT]":
         """
         Clears the entire cache. To be used when some event results in unknown
         invalidations across this particular Dataloader. Returns itself for
@@ -176,7 +176,7 @@ class DataLoader(Generic[KT, VT, CT]):
 
         return self
 
-    def prime(self, key: KT, value: Union[VT, Exception]) -> "DataLoader":
+    def prime(self, key: KT, value: Union[VT, Exception]) -> "DataLoader[KT, VT, CT]":
         """
         Adds the provided key and value to the cache. If the key already exists,
         no change is made. Returns itself for method chaining.
