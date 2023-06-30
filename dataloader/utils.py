@@ -1,5 +1,5 @@
 from itertools import groupby
-from typing import Any, Callable, List, Sequence, TypeVar
+from typing import Any, Callable, List, Optional, Sequence, TypeVar
 
 ValueT = TypeVar("ValueT")
 KeyT = TypeVar("KeyT")
@@ -7,7 +7,12 @@ KeyT = TypeVar("KeyT")
 KEY_FUNCTION = Callable[[ValueT], KeyT]
 
 
-def sort(keys: Sequence[KeyT], values: Sequence[ValueT], *, key_fn: KEY_FUNCTION[ValueT, KeyT]) -> List[ValueT]:
+def sort(
+    keys: Sequence[KeyT],
+    values: Sequence[ValueT],
+    *,
+    key_fn: KEY_FUNCTION[ValueT, KeyT]
+) -> List[Optional[ValueT]]:
     """
     Sort values sequence by keys sequence.
     """
@@ -15,7 +20,12 @@ def sort(keys: Sequence[KeyT], values: Sequence[ValueT], *, key_fn: KEY_FUNCTION
     return list(map(lambda k: value_map.get(k), keys))  # type: ignore
 
 
-def group_sort(keys: Sequence[KeyT], values: Sequence[ValueT], *, key_fn: KEY_FUNCTION[ValueT, KeyT]) -> List[Any]:
+def group_sort(
+    keys: Sequence[KeyT],
+    values: Sequence[ValueT],
+    *,
+    key_fn: KEY_FUNCTION[ValueT, KeyT]
+) -> List[Optional[List[ValueT]]]:
     """
     Sort and group value sequence by key sequence.
 
