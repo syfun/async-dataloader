@@ -3,7 +3,7 @@ __all__ = [
     "sort",
     "group_sort",
 ]
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 from .dataloader import DataLoader  # noqa
-from .utils import sort, group_sort  # noqa
+from .utils import group_sort, sort  # noqa
